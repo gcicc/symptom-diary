@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Symptom Diary - Track your health symptoms">
+    <meta name="theme-color" content="#0d1117">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Symptom Diary</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --accent: #c4a882;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --green: #3fb950;
+            --yellow: #d29922;
+            --red: #f85149;
+            --border: #30363d;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 0 0 auto;
+            padding: 0.75rem 1.25rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            border-color: var(--accent);
+        }
+
+        .tab-button.active {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Log Tab */
+        .log-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .wellness-score {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .wellness-score label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border);
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-display {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            min-width: 3rem;
+            text-align: right;
+        }
+
+        .symptom-grid-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+
+        .symptom-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .symptom-pill {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            color: var(--text);
+            user-select: none;
+        }
+
+        .symptom-pill:hover {
+            border-color: var(--accent);
+        }
+
+        .symptom-pill.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg);
+            font-weight: 600;
+        }
+
+        .symptom-details {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: none;
+            gap: 1.5rem;
+            flex-direction: column;
+        }
+
+        .symptom-details.show {
+            display: flex;
+        }
+
+        .detail-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .detail-group label {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .time-button {
+            padding: 0.75rem;
+            background: var(--border);
+            border: 2px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .time-button:hover {
+            border-color: var(--accent);
+        }
+
+        .time-button.selected {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        textarea {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(196, 168, 130, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            opacity: 0.8;
+        }
+
+        /* Dashboard Tab */
+        .dashboard-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .dashboard-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .dashboard-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .today-symptoms {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .symptom-tag {
+            background: var(--border);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+
+        .symptom-tag.severity-high {
+            background: rgba(248, 81, 73, 0.2);
+            color: #f85149;
+            border: 1px solid #f85149;
+        }
+
+        .symptom-tag.severity-medium {
+            background: rgba(210, 153, 34, 0.2);
+            color: #d29922;
+            border: 1px solid #d29922;
+        }
+
+        .symptom-tag.severity-low {
+            background: rgba(63, 185, 80, 0.2);
+            color: #3fb950;
+            border: 1px solid #3fb950;
+        }
+
+        .top-symptoms {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .symptom-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+
+        .symptom-name {
+            flex: 1;
+        }
+
+        .symptom-count {
+            background: var(--accent);
+            color: var(--bg);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        #wellness-chart {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        .calendar-heatmap {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            background: var(--border);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .calendar-day-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* History Tab */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .history-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .history-date {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+        }
+
+        .history-symptoms {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .history-entry {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .delete-btn {
+            background: rgba(248, 81, 73, 0.2);
+            color: #f85149;
+            border: 1px solid #f85149;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .delete-btn:hover {
+            background: rgba(248, 81, 73, 0.3);
+        }
+
+        /* Settings Tab */
+        .settings-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .settings-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .settings-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .custom-symptom-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .custom-symptom-input input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+
+        .custom-symptom-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .custom-symptom-tag {
+            background: var(--border);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .remove-symptom {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            padding: 0;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .export-btn {
+            background: var(--green);
+            color: white;
+        }
+
+        .export-btn:hover {
+            opacity: 0.9;
+        }
+
+        .reset-btn {
+            background: #f85149;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Onboarding */
+        .onboarding-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .onboarding-overlay.hidden {
+            display: none;
+        }
+
+        .onboarding-content {
+            background: var(--card);
+            border: 2px solid var(--accent);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 90%;
+            text-align: center;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .onboarding-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .onboarding-text {
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .onboarding-btn {
+            background: var(--accent);
+            color: var(--bg);
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 600px) {
+            .symptom-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .tab-nav {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .tab-button {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .dashboard-card {
+                padding: 1rem;
+            }
+
+            .onboarding-content {
+                padding: 1.5rem;
+            }
+
+            .onboarding-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tab-nav">
+            <button class="tab-button active" data-tab="log">Log</button>
+            <button class="tab-button" data-tab="dashboard">Dashboard</button>
+            <button class="tab-button" data-tab="history">History</button>
+            <button class="tab-button" data-tab="settings">Settings</button>
+        </div>
+
+        <!-- Log Tab -->
+        <div class="tab-content active" id="log-tab">
+            <div class="log-section">
+                <div class="wellness-score">
+                    <label for="wellness-slider">Today's Wellness Score</label>
+                    <div class="slider-container">
+                        <input type="range" id="wellness-slider" min="1" max="10" value="5">
+                        <span class="score-display" id="wellness-display">5</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="symptom-grid-label">Select Symptoms</div>
+                    <div class="symptom-grid" id="symptom-grid"></div>
+                </div>
+
+                <div class="symptom-details" id="symptom-details">
+                    <div class="detail-group">
+                        <label for="severity-slider">Severity</label>
+                        <div class="slider-container">
+                            <input type="range" id="severity-slider" min="1" max="10" value="5">
+                            <span class="score-display" id="severity-display">5</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-group">
+                        <label>Time of Day</label>
+                        <div class="time-grid">
+                            <button class="time-button" data-time="morning">Morning</button>
+                            <button class="time-button" data-time="afternoon">Afternoon</button>
+                            <button class="time-button" data-time="evening">Evening</button>
+                            <button class="time-button" data-time="night">Night</button>
+                        </div>
+                    </div>
+
+                    <div class="detail-group">
+                        <label for="notes">Notes (Optional)</label>
+                        <textarea id="notes" placeholder="Any additional details..."></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn-primary" id="save-symptom">Save Symptom</button>
+                        <button class="btn-secondary" id="clear-symptom">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content" id="dashboard-tab">
+            <div class="dashboard-section">
+                <div class="dashboard-card">
+                    <div class="dashboard-title">Today's Symptoms</div>
+                    <div class="today-symptoms" id="today-symptoms">
+                        <div class="empty-state">No symptoms logged yet today</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="dashboard-title">This Week's Top Symptoms</div>
+                    <div class="top-symptoms" id="top-symptoms">
+                        <div class="empty-state">No data yet</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="dashboard-title">7-Day Wellness Trend</div>
+                    <canvas id="wellness-chart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="dashboard-title">Symptom Calendar (Last 30 Days)</div>
+                    <div class="calendar-heatmap" id="calendar-heatmap"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div class="tab-content" id="history-tab">
+            <div class="history-list" id="history-list">
+                <div class="empty-state">No symptom history yet</div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div class="tab-content" id="settings-tab">
+            <div class="settings-section">
+                <div class="settings-card">
+                    <div class="settings-title">Custom Symptoms</div>
+                    <div class="custom-symptom-input">
+                        <input type="text" id="custom-symptom-input" placeholder="Add a custom symptom...">
+                        <button class="btn-primary" id="add-custom-symptom">Add</button>
+                    </div>
+                    <div class="custom-symptom-list" id="custom-symptom-list"></div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-title">Data Management</div>
+                    <button class="btn-primary export-btn" id="export-csv">Export as CSV</button>
+                    <button class="btn-secondary reset-btn" id="reset-data" style="margin-top: 1rem;">Reset All Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Overlay -->
+    <div class="onboarding-overlay" id="onboarding-overlay">
+        <div class="onboarding-content">
+            <div class="onboarding-title">Welcome to Symptom Diary</div>
+            <p class="onboarding-text">
+                Track your health symptoms easily and understand patterns in your wellness journey.
+            </p>
+            <p class="onboarding-text">
+                Log your symptoms, set a wellness score, and review trends in your dashboard.
+            </p>
+            <p class="onboarding-text">
+                All your data stays on your device. No accounts, no tracking.
+            </p>
+            <button class="onboarding-btn" id="onboarding-btn">Get Started</button>
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+        }
+
+        const DEFAULT_SYMPTOMS = [
+            'Headache', 'Fatigue', 'Nausea', 'Dizziness', 'Joint Pain',
+            'Muscle Ache', 'Brain Fog', 'Insomnia', 'Anxiety', 'Stomach Pain',
+            'Back Pain', 'Chest Tightness', 'Shortness of Breath', 'Numbness', 'Skin Irritation'
+        ];
+
+        let state = {
+            selectedSymptom: null,
+            selectedSeverity: 5,
+            selectedTime: null,
+            selectedNotes: '',
+            wellnessScore: 5,
+            symptoms: [], // { date, symptom, severity, time, notes, id }
+            wellnessScores: [], // { date, score }
+            customSymptoms: []
+        };
+
+        function initializeState() {
+            const saved = localStorage.getItem('symptomDiaryState');
+            if (saved) {
+                state = { ...state, ...JSON.parse(saved) };
+            } else {
+                localStorage.setItem('symptomDiaryState', JSON.stringify(state));
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('symptomDiaryState', JSON.stringify(state));
+        }
+
+        function getAllSymptoms() {
+            return [...DEFAULT_SYMPTOMS, ...state.customSymptoms];
+        }
+
+        function renderSymptomGrid() {
+            const grid = document.getElementById('symptom-grid');
+            grid.innerHTML = '';
+            getAllSymptoms().forEach(symptom => {
+                const pill = document.createElement('button');
+                pill.className = 'symptom-pill';
+                if (state.selectedSymptom === symptom) pill.classList.add('selected');
+                pill.textContent = symptom;
+                pill.onclick = () => selectSymptom(symptom);
+                grid.appendChild(pill);
+            });
+        }
+
+        function selectSymptom(symptom) {
+            state.selectedSymptom = symptom;
+            state.selectedSeverity = 5;
+            state.selectedTime = null;
+            state.selectedNotes = '';
+            document.getElementById('severity-slider').value = 5;
+            document.getElementById('severity-display').textContent = '5';
+            document.getElementById('notes').value = '';
+            document.querySelectorAll('.time-button').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('symptom-details').classList.add('show');
+            renderSymptomGrid();
+        }
+
+        function clearSymptom() {
+            state.selectedSymptom = null;
+            state.selectedTime = null;
+            state.selectedNotes = '';
+            document.getElementById('symptom-details').classList.remove('show');
+            renderSymptomGrid();
+        }
+
+        function getSeverityClass(severity) {
+            if (severity <= 3) return 'severity-low';
+            if (severity <= 6) return 'severity-medium';
+            return 'severity-high';
+        }
+
+        function saveSymptom() {
+            if (!state.selectedSymptom || !state.selectedTime) {
+                alert('Please select a symptom and time of day');
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            state.symptoms.push({
+                date: today,
+                symptom: state.selectedSymptom,
+                severity: state.selectedSeverity,
+                time: state.selectedTime,
+                notes: state.selectedNotes,
+                id: Date.now()
+            });
+
+            saveState();
+            clearSymptom();
+            renderSymptomGrid();
+            updateDashboard();
+            alert('Symptom logged!');
+        }
+
+        function updateDashboard() {
+            const today = new Date().toISOString().split('T')[0];
+            const todaySympList = document.getElementById('today-symptoms');
+
+            const todaySymptoms = state.symptoms.filter(s => s.date === today);
+            if (todaySymptoms.length === 0) {
+                todaySympList.innerHTML = '<div class="empty-state">No symptoms logged yet today</div>';
+            } else {
+                todaySympList.innerHTML = todaySymptoms.map(s =>
+                    `<span class="symptom-tag ${getSeverityClass(s.severity)}">${s.symptom} (${s.severity}/10)</span>`
+                ).join('');
+            }
+
+            // Top 5 symptoms this week
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const weekAgoStr = weekAgo.toISOString().split('T')[0];
+
+            const weekSymptoms = state.symptoms.filter(s => s.date >= weekAgoStr);
+            const symptomCounts = {};
+            weekSymptoms.forEach(s => {
+                symptomCounts[s.symptom] = (symptomCounts[s.symptom] || 0) + 1;
+            });
+
+            const topSymptoms = Object.entries(symptomCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const topList = document.getElementById('top-symptoms');
+            if (topSymptoms.length === 0) {
+                topList.innerHTML = '<div class="empty-state">No data yet</div>';
+            } else {
+                topList.innerHTML = topSymptoms.map(([symptom, count]) =>
+                    `<div class="symptom-row"><span class="symptom-name">${symptom}</span><span class="symptom-count">${count}</span></div>`
+                ).join('');
+            }
+
+            // Wellness trend
+            drawWellnessTrend();
+
+            // Calendar heatmap
+            drawCalendarHeatmap();
+        }
+
+        function drawWellnessTrend() {
+            const canvas = document.getElementById('wellness-chart');
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            const today = new Date();
+            const dates = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                dates.push(d.toISOString().split('T')[0]);
+            }
+
+            const scores = dates.map(date => {
+                const ws = state.wellnessScores.find(w => w.date === date);
+                return ws ? ws.score : null;
+            });
+
+            ctx.fillStyle = 'rgba(196, 168, 130, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const padding = 40;
+            const graphWidth = canvas.width - padding * 2;
+            const graphHeight = canvas.height - padding * 2;
+
+            ctx.strokeStyle = '#30363d';
+            ctx.beginPath();
+            ctx.moveTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(196, 168, 130, 0.5)';
+            ctx.fillStyle = 'rgba(196, 168, 130, 0.5)';
+            ctx.font = '12px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            for (let i = 0; i < scores.length; i++) {
+                const x = padding + (graphWidth / (scores.length - 1)) * i;
+                ctx.fillText(dates[i].slice(5), x, canvas.height - padding + 5);
+            }
+
+            ctx.strokeStyle = '#c4a882';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            let firstPoint = true;
+            scores.forEach((score, i) => {
+                if (score !== null) {
+                    const x = padding + (graphWidth / (scores.length - 1)) * i;
+                    const y = canvas.height - padding - ((score / 10) * graphHeight);
+                    if (firstPoint) {
+                        ctx.moveTo(x, y);
+                        firstPoint = false;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+            });
+            ctx.stroke();
+
+            scores.forEach((score, i) => {
+                if (score !== null) {
+                    const x = padding + (graphWidth / (scores.length - 1)) * i;
+                    const y = canvas.height - padding - ((score / 10) * graphHeight);
+                    ctx.fillStyle = '#c4a882';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        function drawCalendarHeatmap() {
+            const heatmapContainer = document.getElementById('calendar-heatmap');
+            heatmapContainer.innerHTML = '';
+
+            const today = new Date();
+            const dates = [];
+            for (let i = 29; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                dates.push(d.toISOString().split('T')[0]);
+            }
+
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayNames.forEach(day => {
+                const label = document.createElement('div');
+                label.className = 'calendar-day-label';
+                label.textContent = day;
+                heatmapContainer.appendChild(label);
+            });
+
+            dates.forEach(date => {
+                const count = state.symptoms.filter(s => s.date === date).length;
+                const intensity = Math.min(count / 5, 1);
+                const hex = Math.round(196 + (intensity * 60)).toString(16);
+                const day = document.createElement('div');
+                day.className = 'calendar-day';
+                day.style.background = `rgba(196, 168, 130, ${0.2 + intensity * 0.8})`;
+                day.textContent = count;
+                day.title = `${date}: ${count} symptoms`;
+                heatmapContainer.appendChild(day);
+            });
+        }
+
+        function updateHistory() {
+            const historyList = document.getElementById('history-list');
+            const grouped = {};
+            state.symptoms.forEach(s => {
+                if (!grouped[s.date]) grouped[s.date] = [];
+                grouped[s.date].push(s);
+            });
+
+            const sortedDates = Object.keys(grouped).sort().reverse();
+
+            if (sortedDates.length === 0) {
+                historyList.innerHTML = '<div class="empty-state">No symptom history yet</div>';
+                return;
+            }
+
+            historyList.innerHTML = sortedDates.map(date => {
+                const symptoms = grouped[date];
+                return `
+                    <div class="history-item">
+                        <div class="history-date">${new Date(date + 'T00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</div>
+                        <div class="history-symptoms">
+                            ${symptoms.map(s => `
+                                <div class="history-entry">
+                                    ${s.symptom} - ${s.severity}/10 severity, ${s.time} ${s.notes ? ` - ${s.notes}` : ''}
+                                    <button class="delete-btn" onclick="deleteSymptom(${s.id})">Delete</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteSymptom(id) {
+            state.symptoms = state.symptoms.filter(s => s.id !== id);
+            saveState();
+            updateHistory();
+            updateDashboard();
+        }
+
+        function renderCustomSymptoms() {
+            const list = document.getElementById('custom-symptom-list');
+            list.innerHTML = state.customSymptoms.map(symptom => `
+                <div class="custom-symptom-tag">
+                    ${symptom}
+                    <button class="remove-symptom" onclick="removeCustomSymptom('${symptom}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        function addCustomSymptom() {
+            const input = document.getElementById('custom-symptom-input');
+            const symptom = input.value.trim();
+            if (symptom && !state.customSymptoms.includes(symptom) && !DEFAULT_SYMPTOMS.includes(symptom)) {
+                state.customSymptoms.push(symptom);
+                saveState();
+                input.value = '';
+                renderCustomSymptoms();
+                renderSymptomGrid();
+            }
+        }
+
+        function removeCustomSymptom(symptom) {
+            state.customSymptoms = state.customSymptoms.filter(s => s !== symptom);
+            saveState();
+            renderCustomSymptoms();
+            renderSymptomGrid();
+        }
+
+        function exportCSV() {
+            let csv = 'Date,Symptom,Severity,Time,Notes\n';
+            state.symptoms.forEach(s => {
+                csv += `"${s.date}","${s.symptom}",${s.severity},"${s.time}","${s.notes.replace(/"/g, '""')}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `symptom-diary-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetAllData() {
+            if (confirm('This will delete all your symptom data. Are you sure?')) {
+                state.symptoms = [];
+                state.wellnessScores = [];
+                saveState();
+                updateHistory();
+                updateDashboard();
+                alert('All data has been reset');
+            }
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab;
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(`${tab}-tab`).classList.add('active');
+
+                if (tab === 'dashboard') updateDashboard();
+                if (tab === 'history') updateHistory();
+            });
+        });
+
+        // Wellness slider
+        document.getElementById('wellness-slider').addEventListener('input', (e) => {
+            state.wellnessScore = parseInt(e.target.value);
+            document.getElementById('wellness-display').textContent = e.target.value;
+        });
+
+        // Severity slider
+        document.getElementById('severity-slider').addEventListener('input', (e) => {
+            state.selectedSeverity = parseInt(e.target.value);
+            document.getElementById('severity-display').textContent = e.target.value;
+        });
+
+        // Time buttons
+        document.querySelectorAll('.time-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.time-button').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                state.selectedTime = btn.dataset.time;
+            });
+        });
+
+        // Notes textarea
+        document.getElementById('notes').addEventListener('input', (e) => {
+            state.selectedNotes = e.target.value;
+        });
+
+        // Save and clear buttons
+        document.getElementById('save-symptom').addEventListener('click', saveSymptom);
+        document.getElementById('clear-symptom').addEventListener('click', clearSymptom);
+
+        // Custom symptoms
+        document.getElementById('add-custom-symptom').addEventListener('click', addCustomSymptom);
+        document.getElementById('custom-symptom-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addCustomSymptom();
+        });
+
+        // Export and reset
+        document.getElementById('export-csv').addEventListener('click', exportCSV);
+        document.getElementById('reset-data').addEventListener('click', resetAllData);
+
+        // Onboarding
+        document.getElementById('onboarding-btn').addEventListener('click', () => {
+            localStorage.setItem('symptomDiaryOnboarded', 'true');
+            document.getElementById('onboarding-overlay').classList.add('hidden');
+        });
+
+        // Save wellness score on tab switch or timed
+        setInterval(() => {
+            const today = new Date().toISOString().split('T')[0];
+            const existing = state.wellnessScores.find(w => w.date === today);
+            if (existing) {
+                existing.score = state.wellnessScore;
+            } else {
+                state.wellnessScores.push({ date: today, score: state.wellnessScore });
+            }
+            saveState();
+        }, 30000);
+
+        // Initialize
+        initializeState();
+        renderSymptomGrid();
+        renderCustomSymptoms();
+
+        if (!localStorage.getItem('symptomDiaryOnboarded')) {
+            document.getElementById('onboarding-overlay').classList.remove('hidden');
+        } else {
+            document.getElementById('onboarding-overlay').classList.add('hidden');
+        }
+
+        // Load today's wellness score
+        const today = new Date().toISOString().split('T')[0];
+        const todayWellness = state.wellnessScores.find(w => w.date === today);
+        if (todayWellness) {
+            state.wellnessScore = todayWellness.score;
+            document.getElementById('wellness-slider').value = todayWellness.score;
+            document.getElementById('wellness-display').textContent = todayWellness.score;
+        }
+    </script>
+</body>
+</html>
